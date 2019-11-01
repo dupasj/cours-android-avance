@@ -15,6 +15,9 @@ import kotlinx.android.synthetic.main.fragment_game_view.*
 
 
 class FragmentGameView(private val game: Game) : Fragment() {
+
+    private var value: Boolean? = null;
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_game_view, container, false)
     }
@@ -23,40 +26,53 @@ class FragmentGameView(private val game: Game) : Fragment() {
         Picasso.get().load(this.game.img).into(image);
 
         val pref = this.activity!!.getSharedPreferences("navigator", Context.MODE_PRIVATE);
-        val value = pref.getBoolean("value",false);
+        this.value = pref.getBoolean("value",false);
 
-        pref.edit().putBoolean("value",!value).apply();
+        this.updateButton();
+
+        button.setOnClickListener{
+            this.buttonClick();
+        }
 
         description.text = game.description;
         name.text = game.name;
 
 
+        super.onViewCreated(view, savedInstanceState)
+    }
 
-        if (value){
+    fun updateButton(){
+        if (this.value!!){
             button.text = getResources().getString(R.string.button_open_navigator);
-            button.setOnClickListener{
-                val browserIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse(game.link)
-                )
-                startActivity(browserIntent)
-            }
         }else{
             button.text = getResources().getString(R.string.button_open_webview);
-            button.setOnClickListener{
-                val browserIntent = Intent(
-                    this.context,
-                    ActivityWebView::class.java
-                );
+        }
+    }
 
-                val bundle = Bundle();
-                browserIntent.putExtra("url",Uri.parse(game.link).toString())
+    fun buttonClick(){
+        if (this.value!!){
+            val browserIntent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(game.link)
+            )
+            startActivity(browserIntent)
+        }else{
+            val browserIntent = Intent(
+                this.context,
+                ActivityWebView::class.java
+            );
 
-                startActivity(browserIntent)
-            }
+            val bundle = Bundle();
+            browserIntent.putExtra("url",Uri.parse(game.link).toString())
+
+            startActivity(browserIntent)
         }
 
+        this.value = !this.value!!;
 
-        super.onViewCreated(view, savedInstanceState)
+        this.updateButton();
+
+        val pref = this.activity!!.getSharedPreferences("navigator", Context.MODE_PRIVATE);
+        pref.edit().putBoolean("value",!this.value!!).apply();
     }
 }
